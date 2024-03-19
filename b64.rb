@@ -7,49 +7,37 @@ def get_binary_string(str)
 end
 
 def create_binary_array(b_str)
-  current = ''
-  arr = []
-  for i in 0...(b_str.size) do
-    # Handle the last character in the string
-    if i == (b_str.size - 1)
-      if i % 6 == 0
-        arr.push(current)
-        arr.push(b_str[i])
-      else
-        current += b_str[i]
-        arr.push(current)
-      end
-
-      break
-    end
-    
-    if i != 0 && i % 6 == 0
-      arr.push(current)
-      current = b_str[i]
-    else
-      current += b_str[i]
-    end
+  b_arr = []
+  for i in (0..(b_str.size - 1)).step(6) do
+    b_arr.push(b_str[i..(i + 5)])
   end
-  
-  arr
+
+  b_arr
 end
 
 def encode_binary(b_array)
-  # This needs to be rewritten to account for padding
-  b_array.map { |c| ASCII_CHARS[c.to_i(2)] }.join('')
+  # Todo: Clean this up
+  b_array.each_with_object([]) do |b, obj|
+    case b.size % 6
+    when 0
+      obj.push(ASCII_CHARS[b.to_i(2)])
+    when 2
+      b += "0000"
+      obj.push(ASCII_CHARS[b.to_i(2)])
+      obj.push('==')
+    when 4
+      b += "00"
+      obj.push(ASCII_CHARS[b.to_i(2)])
+      obj.push("=")
+    end
+  end.join('')
 end
 
-def os_endianness
-  return "Big Endian" if [1].pack('I') == [1].pack("N")
 
-  "Little Endian"
-end
-
-
-#abort("No input provided") unless ARGV[0]
-input_string = ARGV[0] || "Kyle"
+abort("No input string provided") unless ARGV[0]
+input_string = ARGV[0]
 
 binary_string = get_binary_string(input_string)
 binary_array = create_binary_array(binary_string)
 
-print binary_array
+puts encode_binary(binary_array)
