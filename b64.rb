@@ -1,43 +1,44 @@
 #!/usr/bin/env ruby
 
-ASCII_CHARS = ('A'..'Z').to_a + ('a'..'z').to_a + (0..9).to_a + ['+', '/']
-
-def get_binary_string(str)
-  str.split('').map { |x| "%08b" % x.ord }.join('')
-end
-
-def create_binary_array(b_str)
-  b_arr = []
-  for i in (0..(b_str.size - 1)).step(6) do
-    b_arr.push(b_str[i..(i + 5)])
+class B64
+  ASCII_CHARS = ('A'..'Z').to_a + ('a'..'z').to_a + (0..9).to_a + ['+', '/']
+  BIT_LENGTH = 6
+  
+  def self.encode(str)
+    new(str).encode
   end
 
-  b_arr
-end
+  def initialize(str)
+    @str = str
+  end
 
-def encode_binary(b_array)
-  # Todo: Clean this up
-  b_array.each_with_object([]) do |b, obj|
-    case b.size % 6
-    when 0
-      obj.push(ASCII_CHARS[b.to_i(2)])
-    when 2
-      b += "0000"
-      obj.push(ASCII_CHARS[b.to_i(2)])
-      obj.push('==')
-    when 4
-      b += "00"
-      obj.push(ASCII_CHARS[b.to_i(2)])
-      obj.push("=")
+  def encode
+    binary_array.each_with_object([]) do |b, obj|
+      padding = ((BIT_LENGTH - b.size) % BIT_LENGTH) % BIT_LENGTH
+      b += ("0" * padding)
+      char = ASCII_CHARS[b.to_i(2)].to_s + ("=" * (padding / 2))
+      obj.push(char)
+    end.join('')
+  end
+
+  private
+
+  def binary_string
+    @binary_string ||= @str.split('').map { |x| "%08b" % x.ord }.join('')
+  end
+
+  def binary_array
+    @binary_array ||= build_binary_array
+  end
+      
+  def build_binary_array
+    (0...binary_string.size).step(BIT_LENGTH).each_with_object([]) do |i, obj|
+      obj.push(binary_string[i..(i + 5)])
     end
-  end.join('')
+  end
 end
-
 
 abort("No input string provided") unless ARGV[0]
 input_string = ARGV[0]
 
-binary_string = get_binary_string(input_string)
-binary_array = create_binary_array(binary_string)
-
-puts encode_binary(binary_array)
+puts B64.encode(input_string)
